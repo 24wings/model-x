@@ -1,0 +1,38 @@
+﻿@using Blazor.Diagrams.Components.Renderers
+<li class="list-group-item" style="height: 51px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;">
+       
+    @if (Column.Primary)
+    {
+        <MudIcon Icon="@Icons.Filled.Key" Color="Color.Warning"></MudIcon>
+    }else{
+        <div></div>
+    }
+    @if (!Column.Primary && Table.GetPort(Column) != null)
+    {
+        <PortRenderer Class="port-render port-render-left"  Port="Table.GetPort(Column)"></PortRenderer>
+    }else{
+        <PortRenderer Class="port-render port-render-right" Port="Table.GetPort(Column)"></PortRenderer>
+
+    }
+    @Column.Name
+
+    @*<MudBadge Content="3"  Color="Color.Error" Overlap="true" Bordered="true" Class="mx-6 my-4" Icon="@Icons.Material.Filled.Key">
+        @*<MudIcon  Color="Color.Default" />*@
+        @*<MudButton Color="Color.Error" Variant="Variant.Filled" DisableElevation="true"></MudButton>*@
+    @*</MudBadge>*@
+   
+    @if (Column.Primary)
+    {
+        <i class="fas fa-key mr-2 text-warning"></i>
+    }
+    else if (HasLinks)
+    {
+        <i class="fas fa-key mr-2 text-secondary"></i>
+    }
+    <span class="text-primary @(Column.Primary || HasLinks ? "" : "ml-4")">@Column.DataType.ToString()</span>
+    @Column.Remark
+
+</li>

@@ -1,0 +1,55 @@
+﻿@page "/"
+@using Blazor.Diagrams.Core.Geometry
+@using Blazor.Diagrams.Core.Models.Base
+@using Microsoft.EntityFrameworkCore
+@using ModelX.Components
+@using ModelX.Data
+@using ModelX.Services
+@using Syncfusion.Blazor.Diagram
+@using System.Collections.ObjectModel
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject DatabaseQueryService databaseQueryService
+
+<div style="margin-bottom:20px;display:flex;justify-content:space-between">
+    <div>
+        <MudChip Color="Color.Info">角色权限视图</MudChip>
+        @foreach (var systemErView in SystemErViews)
+        {
+            <MudChip Color="Color.Info">@systemErView.Name</MudChip>
+        }
+
+    </div>
+
+    <MudDialog IsVisible="ShowAddingViewDialog" Style="width:600px;height:200px" Options="new DialogOptions{Position=DialogPosition.TopCenter}">
+        <TitleContent>新增视图</TitleContent>
+        <DialogContent>
+            <MudItem xs="12" sm="12" md="12">
+                <MudField Label="视图名称" Variant="Variant.Text">
+                    <MudInput T="string" @bind-Value="NewSystemErView.Name" Style="border:none"></MudInput>
+                </MudField>
+            </MudItem>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="()=>ShowAddingViewDialog=false">取消</MudButton>
+            <MudButton Color="Color.Primary" OnClick="()=>{ShowAddingViewDialog=false;SystemErViews.Add(new SystemErView{Name=NewSystemErView.Name});StateHasChanged(); }">确定</MudButton>
+        </DialogActions>
+    </MudDialog>
+
+    <div style="width:100px;">
+        <MudButton Variant="Variant.Filled" @onclick="()=>ShowAddingViewDialog=true" StartIcon="@Icons.Material.Filled.Add" Color="Color.Info" Size="MudBlazor.Size.Small">新增视图</MudButton>
+    </div>
+</div>
+
+<ErViewComponent></ErViewComponent>
+
+@code{
+  
+    public List<SystemErView> SystemErViews { get; set; } = new List<SystemErView>();
+    public SystemErView NewSystemErView { get; set; } = new SystemErView();
+    public bool ShowAddingViewDialog { get; set; } = false;
+
+
+    public void SelectErView(){
+
+    }
+}

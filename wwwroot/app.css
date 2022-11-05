@@ -1,0 +1,19 @@
+﻿.port {
+    min-height: 30px;
+    min-width: 30px;
+    
+}
+.action .port {
+    background: burlywood;
+}
+.port-render-right {
+    /*position: relative;*/
+    /*right: -55px;*/
+    position: absolute;
+    right: 0;
+}
+
+.port-render-left {
+    position: relative;
+    left: -80px;
+}

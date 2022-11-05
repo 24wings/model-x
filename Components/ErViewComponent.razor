@@ -1,0 +1,230 @@
+﻿@using Blazor.Diagrams.Core.Geometry
+@using Blazor.Diagrams.Core.Models.Base
+@using Microsoft.EntityFrameworkCore
+@using ModelX.Components
+@using ModelX.Data
+@using ModelX.Services
+@using Syncfusion.Blazor.Diagram
+@using System.Collections.ObjectModel
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject DatabaseQueryService databaseQueryService
+
+
+@*<MudButton @onclick="NewTable">新增表</MudButton>*@
+@*<div></div>*@
+<MudGrid Spacing="@spacing" Justify="Justify.Center">
+    <MudItem md="4">
+        <MudPaper Elevation="2">
+            <div style="height:800px;">
+                <MudTabs Outlined="true" Position="Position.Left" Rounded="true" Border="true"
+                         ApplyEffectsToContainer="true" Class="mt-8" PanelClass="pa-6" Style="    margin-top: 0 !important;">
+                    @foreach (var app in Apps)
+                    {
+                        <MudTabPanel Text="@(app.Description?? app.Name)">
+                            @* Toolbox *@
+                            <div style="    min-height: 400px;width: 100%;">
+                                <MudList Clickable="true">
+                                    @foreach (var table in app.DatabaseTables)
+                                    {
+
+                                        <MudListItem Text="@(table.TABLE_COMMENT+"("+table.Name+")")" draggable="true" @ondragstart="() => OnDragDatabase(table)" />
+                                        <MudDivider></MudDivider>
+
+                                    }
+                                </MudList>
+                                @*
+                            <div class="row h-100 p-4 no-gutters" >
+                            @* <div class="col-6">
+                            <div class="text-center" draggable="true" @ondragstart="() => OnDragStart(0)">
+                            <img class="d-block m-auto" src="default.png" />
+                            <span>@(table.Name)</span>
+                            </div>
+                            </div>
+                            <div class="col-6">
+                            <div draggable="true" @ondragstart="() => OnDragDatabase(table)">
+                            @*<img class="d-block m-auto" src="default.png" />
+                            <span>@table.Name</span>
+                            </div>
+                            </div>
+                            </div>*@
+                            </div>
+                        </MudTabPanel>
+                        @* <MudTabPanel Text="Item Two">
+                    <MudText>Content Two</MudText>
+                    </MudTabPanel>
+                    <MudTabPanel Text="Item Three">
+                    <MudText>Content Three</MudText>
+                    </MudTabPanel>*@
+                    }
+
+                </MudTabs>
+
+            </div>
+
+        </MudPaper>
+
+    </MudItem>
+    <MudItem md="8">
+        <MudPaper Style="width:100%;height:800px" Elevation="0">
+
+            <div Style="width:100%;height:800px;    padding: 12px;" ondragover="event.preventDefault();" @ondragover:preventDefault @ondrop="OnDrop">
+
+
+                <CascadingValue Value="Diagram">
+                    <DiagramCanvas></DiagramCanvas>
+                </CascadingValue>
+            </div>
+        </MudPaper>
+
+    </MudItem>
+
+</MudGrid>
+@code{
+
+    ///
+    ///是否操作准备就绪
+    ///
+    public bool IsActionBeging { get; set; } = false;
+    public List<Apps> Apps { get; set; } = new List<Apps>();
+    public string getActionBegingClass()
+    {
+        return "pa-16 ma-2 " + (IsActionBeging ? "action" : "");
+    }
+    public int spacing { get; set; } = 2;
+    private int? _draggedType;
+    public AppDbContext AppDbContext { get; set; }
+    public List<RbacUser> RbacUsers { get; set; }
+    public List<DatabaseTable> DatabaseTable { get; set; }
+    public DatabaseTable? SelectedDatabaseTable { get; set; }
+    private void OnDragStart(int key)
+    {
+        // Can also use transferData, but this is probably "faster"
+        _draggedType = key;
+    }
+
+
+    private void OnDragDatabase(DatabaseTable table)
+    {
+        // Can also use transferData, but this is probably "faster"
+        //_draggedType = key;
+        SelectedDatabaseTable = table;
+
+    }
+
+
+
+    private void OnDrop(DragEventArgs e)
+    {
+
+        //if (_draggedType == null) // Unkown item
+        //    return;
+
+        var position = Diagram.GetRelativeMousePoint(e.ClientX, e.ClientY);
+        var columns = SelectedDatabaseTable.Columns.Select(c => new Column { Name = c.COLUMN_NAME, DataType = c.COLUMN_TYPE, Primary = !string.IsNullOrEmpty(c.COLUMN_KEY), Remark = c.COLUMN_COMMENT }).ToList();
+        var node = new Table(columns, null) { Comment = SelectedDatabaseTable.TABLE_COMMENT, Name = SelectedDatabaseTable.Name, };// SelectedDatabaseTable;// _draggedType == 0 ? new NodeModel(position) : new Table();
+                                                                                                                                  //node.AddPort(PortAlignment.Top);
+                                                                                                                                  //    node.AddPort(PortAlignment.Bottom);
+        Diagram.Nodes.Add(node);
+        //_draggedType = null;
+    }
+
+    private Diagram Diagram { get; set; } = new Diagram(new DiagramOptions
+        {
+            GridSize = 40,
+            AllowMultiSelection = false,
+            Links = new DiagramLinkOptions
+            {
+                Factory = (diagram, sourcePort) =>
+                {
+                    return new LinkModel(sourcePort, null)
+                    {
+                        Router = Routers.Orthogonal,
+                        PathGenerator = PathGenerators.Straight,
+                    };
+                }
+            }
+        });
+
+
+    //private NodeModel NewNode(double x, double y)
+    //{
+    //    var node = new NodeModel(new Point(x, y));
+    //    node.AddPort(PortAlignment.Bottom);
+    //    node.AddPort(PortAlignment.Top);
+    //    node.AddPort(PortAlignment.Left);
+    //    node.AddPort(PortAlignment.Right);
+    //    return node;
+    //}
+    //private void Setup()
+    //{
+    //    var node1 = NewNode(50, 50);
+    //    var node2 = NewNode(300, 300);
+    //    var node3 = NewNode(300, 50);
+    //    Diagram.Nodes.Add(new[] { node1, node2, node3 });
+    //    Diagram.Links.Add(new LinkModel(node1.GetPort(PortAlignment.Right), node2.GetPort(PortAlignment.Left)));
+    //}
+    //private void NewTable()
+    //{
+    //    Diagram.Nodes.Add(new Table());
+    //}
+    public void LoadTableDetail(DatabaseTable databaseTable)
+    {
+        databaseTable.Columns = databaseQueryService.ShowTableDetail(databaseTable.Name).ToList();
+    }
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Apps = databaseQueryService.QueryApps();
+        AppDbContext = DbFactory.CreateDbContext();
+
+        RbacUsers = AppDbContext.RbacUsers.ToList();
+        Diagram.RegisterModelComponent<Table, TableNode>();
+        Diagram.Links.Added += OnLinkAdded;
+        Diagram.Links.Removed += Diagram_LinkRemoved;
+
+        DatabaseTable = databaseQueryService.ShowTables().ToList();
+        Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(DatabaseTable));
+
+        //var options = new DiagramOptions
+        //    {
+        //        DeleteKey = "Delete", // What key deletes the selected nodes/links
+        //        DefaultNodeComponent = null, // Default component for nodes
+        //        AllowMultiSelection = true, // Whether to allow multi selection using CTRL
+        //        Links = new DiagramLinkOptions
+        //        {
+        //            // Options related to links
+        //        },
+        //        Zoom = new DiagramZoomOptions
+        //        {
+        //            Minimum = 0.5, // Minimum zoom value
+        //            Inverse = false, // Whether to inverse the direction of the zoom when using the wheel
+        //                             // Other
+        //        }
+        //    };
+        //Diagram = new Diagram(options);
+        //Setup();
+    }
+    private void OnLinkAdded(BaseLinkModel link)
+    {
+        link.TargetPortChanged += OnLinkTargetPortChanged;
+    }
+
+    private void Diagram_LinkRemoved(BaseLinkModel link)
+    {
+        link.TargetPortChanged -= OnLinkTargetPortChanged;
+
+        if (!link.IsAttached)
+            return;
+
+        var sourceCol = (link.SourcePort as ColumnPort).Column;
+        var targetCol = (link.TargetPort as ColumnPort).Column;
+        (sourceCol.Primary ? targetCol : sourceCol).Refresh();
+    }
+    private void OnLinkTargetPortChanged(BaseLinkModel link, PortModel oldPort, PortModel newPort)
+    {
+        link.Labels.Add(new LinkLabelModel(link, "1..*", -40, new Point(0, -30)));
+        link.Refresh();
+
+        ((newPort ?? oldPort) as ColumnPort).Column.Refresh();
+    }
+}

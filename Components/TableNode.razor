@@ -1,0 +1,51 @@
+﻿
+@using Blazor.Diagrams.Components.Renderers
+<MudCard  Elevation="4" style="width: 300px;padding:0px 10px;" class="@getActionBegingClass()" @onmouseenter="()=>IsActionBeging=true" @onmouseleave="()=>IsActionBeging=false">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText>@Node.Comment @Node.Name</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            @*<MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />*@
+       
+        </CardHeaderActions>
+
+
+    </MudCardHeader>
+    <MudCardContent>
+      @*  @if (Node.HasPrimaryColumn)
+        {
+            <PortRenderer Port="Node.GetPort(PortAlignment.Right)"></PortRenderer>
+        }*@
+        <ul class="list-group list-group-flush">
+            @foreach (var column in Node.Columns.OrderByDescending(c => c.Primary))
+            {
+                <TableColumn @key="column" Table="Node" Column="column"></TableColumn>
+                <MudDivider />
+
+            }
+        </ul>
+      
+
+@*<div class="card @(Node.Selected ? "selected" : "")" style="width: 320px;">
+    <div class="card-header">
+        <h6 class="mb-0">@Node.Name</h6>
+    </div>*@
+   
+
+ 
+@*</div>*@
+</MudCardContent>
+</MudCard>
+
+
+        @code{
+    ///
+    ///是否操作准备就绪
+    ///
+    public bool IsActionBeging { get; set; } = false;
+    public string getActionBegingClass()
+    {
+        return (Node.Selected ? " selected " :  " ")+ "  ma-2 " + (IsActionBeging ? "action" : "");
+    }
+        }
